@@ -25,6 +25,7 @@ export const SignUpForm = ({ isMobile }) => {
     mode: "onBlur",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmedPassword, setShowConfirmedPassword] = useState(false);
 
   const onSubmit = (data) => {
     console.log(data);
@@ -32,6 +33,10 @@ export const SignUpForm = ({ isMobile }) => {
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const toggleShowConfirmedPassword = () => {
+    setShowConfirmedPassword(!showConfirmedPassword);
   };
 
   return (
@@ -47,7 +52,59 @@ export const SignUpForm = ({ isMobile }) => {
         onSubmit={handleSubmit(onSubmit)}
       >
         <Stack spacing={2}>
+          <Typography component="h2" variant="button" align="left">
+            Personal Details
+          </Typography>
+
           <TextField
+            required
+            error={!!errors.firstName}
+            label="First name"
+            variant="outlined"
+            helperText={
+              !!errors.firstName ? "Please enter your first name." : ""
+            }
+            {...register("firstName", {
+              required: true,
+            })}
+          />
+          <TextField
+            required
+            error={!!errors.lastName}
+            label="Last name"
+            variant="outlined"
+            helperText={!!errors.lastName ? "Please enter your last name." : ""}
+            {...register("lastName", {
+              required: true,
+            })}
+          />
+          <TextField
+            required
+            error={!!errors.phoneNumber}
+            label="Phone Number"
+            variant="outlined"
+            helperText={
+              !!errors.phoneNumber ? "Please enter your phone number." : ""
+            }
+            {...register("phoneNumber", {
+              required: true,
+            })}
+          />
+          <TextField
+            required
+            error={!!errors.imageUrl}
+            label="Image URL"
+            variant="outlined"
+            helperText={!!errors.imageUrl ? "Please enter your image URL." : ""}
+            {...register("imageUrl", {
+              required: true,
+            })}
+          />
+          <Typography component="h2" variant="button" align="left">
+            Account Details
+          </Typography>
+          <TextField
+            required
             error={!!errors.email}
             label="Email"
             variant="outlined"
@@ -87,6 +144,43 @@ export const SignUpForm = ({ isMobile }) => {
             {!!errors.password && (
               <FormHelperText
                 error={!!errors.password}
+                id="outlined-weight-helper-text"
+              >
+                Please enter a valid password.
+              </FormHelperText>
+            )}
+          </FormControl>
+          <FormControl sx={{ m: 1 }} variant="outlined">
+            <InputLabel
+              error={!!errors.confirmPassword}
+              htmlFor="outlined-adornment-password"
+            >
+              Confirm Password
+            </InputLabel>
+            <OutlinedInput
+              error={!!errors.confirmPassword}
+              id="outlined-adornment-confirm-password"
+              type={showConfirmedPassword ? "text" : "password"}
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={toggleShowConfirmedPassword}
+                    onMouseDown={toggleShowConfirmedPassword}
+                    edge="end"
+                  >
+                    {showConfirmedPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              }
+              label="Confirm Password"
+              {...register("confirmPassword", {
+                required: true,
+              })}
+            />
+            {!!errors.confirmPassword && (
+              <FormHelperText
+                error={!!errors.confirmPassword}
                 id="outlined-weight-helper-text"
               >
                 Please enter a valid password.
