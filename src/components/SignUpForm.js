@@ -21,14 +21,21 @@ export const SignUpForm = ({ isMobile }) => {
     register,
     formState: { errors },
     handleSubmit,
+    setError,
   } = useForm({
     mode: "onBlur",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmedPassword, setShowConfirmedPassword] = useState(false);
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const onSubmit = (formData) => {
+    if (formData.password !== formData.confirmPassword) {
+      setError("confirmPassword", {
+        type: "manual",
+        message: "Passwords do not match.",
+      });
+    }
+    console.log(formData);
   };
 
   const toggleShowPassword = () => {
@@ -183,7 +190,8 @@ export const SignUpForm = ({ isMobile }) => {
                 error={!!errors.confirmPassword}
                 id="outlined-weight-helper-text"
               >
-                Please enter a valid password.
+                {errors?.confirmPassword?.message ||
+                  "Please enter a valid password."}
               </FormHelperText>
             )}
           </FormControl>
