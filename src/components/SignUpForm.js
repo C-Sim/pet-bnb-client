@@ -22,6 +22,7 @@ export const SignUpForm = ({ isMobile }) => {
     formState: { errors },
     handleSubmit,
     setError,
+    getValues,
   } = useForm({
     mode: "onBlur",
   });
@@ -183,15 +184,15 @@ export const SignUpForm = ({ isMobile }) => {
               label="Confirm Password"
               {...register("confirmPassword", {
                 required: true,
+                validate: (value) => getValues("password") === value,
               })}
             />
-            {!!errors.confirmPassword && (
+            {errors.confirmPassword && (
               <FormHelperText
                 error={!!errors.confirmPassword}
                 id="outlined-weight-helper-text"
               >
-                {errors?.confirmPassword?.message ||
-                  "Please enter a valid password."}
+                {errors.confirmPassword?.message || "Passwords do not match."}
               </FormHelperText>
             )}
           </FormControl>
