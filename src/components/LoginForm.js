@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@apollo/client";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
+import LoadingButton from "@mui/lab/LoadingButton";
 import Paper from "@mui/material/Paper";
 import IconButton from "@mui/material/IconButton";
 import OutlinedInput from "@mui/material/OutlinedInput";
@@ -16,7 +18,11 @@ import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import FormHelperText from "@mui/material/FormHelperText";
 
+import { LOGIN } from "../graphql/mutations";
+import { useAuth } from "../context/AppProvider";
+
 export const LoginForm = ({ isMobile }) => {
+  const [login, { data, loading, error }] = useMutation(LOGIN);
   const {
     register,
     formState: { errors },
@@ -24,10 +30,33 @@ export const LoginForm = ({ isMobile }) => {
   } = useForm({
     mode: "onBlur",
   });
+  const { setIsLoggedIn, setUser } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
-  const onSubmit = (data) => {
-    console.log(data);
+  useEffect(() => {
+    if (data?.login?.success) {
+      const { token, user } = data.login;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      setUser(user);
+      setIsLoggedIn(true);
+
+      navigate("/dashboard", { replace: true });
+    }
+  }, [data, navigate, setUser, setIsLoggedIn]);
+
+  const onSubmit = (formData) => {
+    login({
+      variables: {
+        loginInput: {
+          email: formData.email,
+          password: formData.password,
+        },
+      },
+    });
   };
 
   const toggleShowPassword = () => {
@@ -95,20 +124,22 @@ export const LoginForm = ({ isMobile }) => {
           </FormControl>
         </Stack>
         <Stack spacing={2}>
-          <Button variant="contained" type="submit">
+          <LoadingButton variant="contained" type="submit" loading={loading}>
             Login
-          </Button>
+          </LoadingButton>
           <Typography variant="caption" component="div" align="center">
             Don't have an account? <Link href="/sign-up">Sign up</Link>
           </Typography>
-          <Typography
-            variant="caption"
-            component="div"
-            sx={{ color: "red" }}
-            align="center"
-          >
-            Failed to login. Please try again.
-          </Typography>
+          {error && (
+            <Typography
+              variant="caption"
+              component="div"
+              sx={{ color: "red" }}
+              align="center"
+            >
+              Failed to login. Please try again.
+            </Typography>
+          )}
         </Stack>
       </Stack>
     </Paper>

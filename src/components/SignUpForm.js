@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useLazyQuery } from "@apollo/client";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
+import LoadingButton from "@mui/lab/LoadingButton";
 import Paper from "@mui/material/Paper";
 import IconButton from "@mui/material/IconButton";
 import OutlinedInput from "@mui/material/OutlinedInput";
@@ -15,8 +17,27 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import FormHelperText from "@mui/material/FormHelperText";
+import SearchIcon from "@mui/icons-material/Search";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Button from "@mui/material/Button";
+
+import { SIGNUP } from "../graphql/mutations";
+import { ADDRESS_LOOKUP } from "../graphql/queries";
 
 export const SignUpForm = ({ isMobile }) => {
+  const [signup, { data, loading, error }] = useMutation(SIGNUP);
+  const [
+    addressLookup,
+    {
+      data: addressLookupData,
+      loading: addressLookupLoading,
+      error: addressLookupError,
+    },
+  ] = useLazyQuery(ADDRESS_LOOKUP);
   const {
     register,
     formState: { errors },
@@ -28,6 +49,22 @@ export const SignUpForm = ({ isMobile }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmedPassword, setShowConfirmedPassword] = useState(false);
+  const [postcode, setPostcode] = useState("");
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (data?.signup?.success) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [data, navigate]);
+
+  useEffect(() => {
+    if (addressLookupData?.addressLookup) {
+      console.log(addressLookupData?.addressLookup);
+      handleOpenModal();
+    }
+  }, [addressLookupData]);
 
   const onSubmit = (formData) => {
     if (formData.password !== formData.confirmPassword) {
@@ -35,8 +72,24 @@ export const SignUpForm = ({ isMobile }) => {
         type: "manual",
         message: "Passwords do not match.",
       });
+    } else {
+      const signupInput = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phoneNumber,
+        imageUrl: formData.imageUrl,
+        email: formData.email,
+        password: formData.password,
+        userType: "petCarer",
+        address: "62ffd2370a84c323126060bc",
+      };
+
+      signup({
+        variables: {
+          signupInput,
+        },
+      });
     }
-    console.log(formData);
   };
 
   const toggleShowPassword = () => {
@@ -47,8 +100,50 @@ export const SignUpForm = ({ isMobile }) => {
     setShowConfirmedPassword(!showConfirmedPassword);
   };
 
+  const handleOnChangeAddress = (event) => {
+    setPostcode(event.target.value);
+  };
+
+  const handleAddressLookup = () => {
+    addressLookup({
+      variables: {
+        postcode,
+      },
+    });
+  };
+
+  const handleOpenModal = () => {
+    setOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpen(false);
+  };
+
   return (
     <Paper sx={{ p: 3, minWidth: isMobile ? "90%" : "400px" }} elevation={6}>
+      <Dialog open={open} onClose={handleCloseModal}>
+        <DialogTitle>Subscribe</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            To subscribe to this website, please enter your email address here.
+            We will send updates occasionally.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="Email Address"
+            type="email"
+            fullWidth
+            variant="standard"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal}>Cancel</Button>
+          <Button onClick={handleCloseModal}>Subscribe</Button>
+        </DialogActions>
+      </Dialog>
       <Typography component="h1" variant="h4" align="center">
         Sign Up
       </Typography>
@@ -109,6 +204,33 @@ export const SignUpForm = ({ isMobile }) => {
             })}
           />
           <Typography component="h2" variant="button" align="left">
+            Address Details
+          </Typography>
+          <FormControl sx={{ m: 1 }} variant="outlined">
+            <InputLabel htmlFor="outlined-adornment-password">
+              Postcode
+            </InputLabel>
+            <OutlinedInput
+              id="outlined-adornment-password"
+              type="text"
+              value={postcode}
+              onChange={handleOnChangeAddress}
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleAddressLookup}
+                    onMouseDown={handleAddressLookup}
+                    edge="end"
+                  >
+                    <SearchIcon />
+                  </IconButton>
+                </InputAdornment>
+              }
+              label="Password"
+            />
+          </FormControl>
+          <Typography component="h2" variant="button" align="left">
             Account Details
           </Typography>
           <TextField
@@ -122,15 +244,12 @@ export const SignUpForm = ({ isMobile }) => {
             })}
           />
           <FormControl sx={{ m: 1 }} variant="outlined">
-            <InputLabel
-              error={!!errors.password}
-              htmlFor="outlined-adornment-password"
-            >
+            <InputLabel error={!!errors.password} htmlFor="password">
               Password
             </InputLabel>
             <OutlinedInput
               error={!!errors.password}
-              id="outlined-adornment-password"
+              id="password"
               type={showPassword ? "text" : "password"}
               endAdornment={
                 <InputAdornment position="end">
@@ -150,10 +269,7 @@ export const SignUpForm = ({ isMobile }) => {
               })}
             />
             {!!errors.password && (
-              <FormHelperText
-                error={!!errors.password}
-                id="outlined-weight-helper-text"
-              >
+              <FormHelperText error={!!errors.password}>
                 Please enter a valid password.
               </FormHelperText>
             )}
@@ -161,18 +277,18 @@ export const SignUpForm = ({ isMobile }) => {
           <FormControl sx={{ m: 1 }} variant="outlined">
             <InputLabel
               error={!!errors.confirmPassword}
-              htmlFor="outlined-adornment-password"
+              htmlFor="confirm-password"
             >
               Confirm Password
             </InputLabel>
             <OutlinedInput
               error={!!errors.confirmPassword}
-              id="outlined-adornment-confirm-password"
+              id="confirm-password"
               type={showConfirmedPassword ? "text" : "password"}
               endAdornment={
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label="toggle password visibility"
+                    aria-label="toggle confirm password visibility"
                     onClick={toggleShowConfirmedPassword}
                     onMouseDown={toggleShowConfirmedPassword}
                     edge="end"
@@ -188,30 +304,29 @@ export const SignUpForm = ({ isMobile }) => {
               })}
             />
             {errors.confirmPassword && (
-              <FormHelperText
-                error={!!errors.confirmPassword}
-                id="outlined-weight-helper-text"
-              >
+              <FormHelperText error={!!errors.confirmPassword}>
                 {errors.confirmPassword?.message || "Passwords do not match."}
               </FormHelperText>
             )}
           </FormControl>
         </Stack>
         <Stack spacing={2}>
-          <Button variant="contained" type="submit">
-            Login
-          </Button>
+          <LoadingButton variant="contained" type="submit" loading={loading}>
+            Sign Up
+          </LoadingButton>
           <Typography variant="caption" component="div" align="center">
-            Don't have an account? <Link href="/sign-up">Sign up</Link>
+            Already have an account? <Link href="/login">Login</Link>
           </Typography>
-          <Typography
-            variant="caption"
-            component="div"
-            sx={{ color: "red" }}
-            align="center"
-          >
-            Failed to login. Please try again.
-          </Typography>
+          {error && (
+            <Typography
+              variant="caption"
+              component="div"
+              sx={{ color: "red" }}
+              align="center"
+            >
+              Failed to sign up. Please try again.
+            </Typography>
+          )}
         </Stack>
       </Stack>
     </Paper>
