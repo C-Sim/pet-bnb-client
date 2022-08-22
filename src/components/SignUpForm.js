@@ -49,13 +49,13 @@ export const SignUpForm = ({ isMobile }) => {
     formState: { errors },
     handleSubmit,
     setError,
+    clearErrors,
     getValues,
   } = useForm({
     mode: "onBlur",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmedPassword, setShowConfirmedPassword] = useState(false);
-  const [postcode, setPostcode] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState();
   const [selectedAddress, setSelectedAddress] = useState();
@@ -78,6 +78,11 @@ export const SignUpForm = ({ isMobile }) => {
       setError("confirmPassword", {
         type: "manual",
         message: "Passwords do not match.",
+      });
+    } else if (!selectedAddressId) {
+      setError("postcode", {
+        type: "manual",
+        message: "Please select an address",
       });
     } else {
       const signupInput = {
@@ -107,14 +112,10 @@ export const SignUpForm = ({ isMobile }) => {
     setShowConfirmedPassword(!showConfirmedPassword);
   };
 
-  const handleOnChangeAddress = (event) => {
-    setPostcode(event.target.value);
-  };
-
   const handleAddressLookup = () => {
     addressLookup({
       variables: {
-        postcode,
+        postcode: getValues("postcode"),
       },
     });
   };
@@ -133,6 +134,7 @@ export const SignUpForm = ({ isMobile }) => {
       (each) => each._id === event.currentTarget.id
     );
     setSelectedAddress(fullAddress);
+    clearErrors("postcode");
     handleCloseModal();
   };
 
@@ -232,8 +234,8 @@ export const SignUpForm = ({ isMobile }) => {
             <OutlinedInput
               id="outlined-adornment-password"
               type="text"
-              value={postcode}
-              onChange={handleOnChangeAddress}
+              // value={postcode}
+              // onChange={handleOnChangeAddress}
               endAdornment={
                 <InputAdornment position="end">
                   <IconButton
@@ -247,7 +249,15 @@ export const SignUpForm = ({ isMobile }) => {
                 </InputAdornment>
               }
               label="Password"
+              {...register("postcode", {
+                required: true,
+              })}
             />
+            {!!errors.postcode && (
+              <FormHelperText error={!!errors.postcode}>
+                {errors.postcode?.message}
+              </FormHelperText>
+            )}
           </FormControl>
           {selectedAddress && (
             <Typography component="div" variant="caption" align="left">
