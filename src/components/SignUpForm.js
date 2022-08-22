@@ -24,6 +24,10 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Button from "@mui/material/Button";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
 
 import { SIGNUP } from "../graphql/mutations";
 import { ADDRESS_LOOKUP } from "../graphql/queries";
@@ -51,17 +55,18 @@ export const SignUpForm = ({ isMobile }) => {
   const [showConfirmedPassword, setShowConfirmedPassword] = useState(false);
   const [postcode, setPostcode] = useState("");
   const [open, setOpen] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState();
+  const [selectedAddress, setSelectedAddress] = useState();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (data?.signup?.success) {
-      navigate("/dashboard", { replace: true });
+      navigate("/login", { replace: true });
     }
   }, [data, navigate]);
 
   useEffect(() => {
     if (addressLookupData?.addressLookup) {
-      console.log(addressLookupData?.addressLookup);
       handleOpenModal();
     }
   }, [addressLookupData]);
@@ -81,7 +86,7 @@ export const SignUpForm = ({ isMobile }) => {
         email: formData.email,
         password: formData.password,
         userType: "petCarer",
-        address: "62ffd2370a84c323126060bc",
+        address: selectedAddressId,
       };
 
       signup({
@@ -120,28 +125,40 @@ export const SignUpForm = ({ isMobile }) => {
     setOpen(false);
   };
 
+  const handleAddressSelection = (event) => {
+    setSelectedAddressId(event.currentTarget.id);
+    const { fullAddress } = addressLookupData?.addressLookup?.addresses.find(
+      (each) => each._id === event.currentTarget.id
+    );
+    setSelectedAddress(fullAddress);
+    handleCloseModal();
+  };
+
   return (
     <Paper sx={{ p: 3, minWidth: isMobile ? "90%" : "400px" }} elevation={6}>
       <Dialog open={open} onClose={handleCloseModal}>
-        <DialogTitle>Subscribe</DialogTitle>
+        <DialogTitle>Select Address</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            To subscribe to this website, please enter your email address here.
-            We will send updates occasionally.
+            Please select one address from the following list:
           </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="name"
-            label="Email Address"
-            type="email"
-            fullWidth
-            variant="standard"
-          />
+          <List>
+            {addressLookupData?.addressLookup?.addresses?.map((address) => {
+              return (
+                <ListItem disablePadding key={address._id}>
+                  <ListItemButton
+                    onClick={handleAddressSelection}
+                    id={address._id}
+                  >
+                    <ListItemText primary={address.fullAddress} />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </List>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Cancel</Button>
-          <Button onClick={handleCloseModal}>Subscribe</Button>
         </DialogActions>
       </Dialog>
       <Typography component="h1" variant="h4" align="center">
@@ -230,6 +247,11 @@ export const SignUpForm = ({ isMobile }) => {
               label="Password"
             />
           </FormControl>
+          {selectedAddress && (
+            <Typography component="div" variant="caption" align="left">
+              {selectedAddress}
+            </Typography>
+          )}
           <Typography component="h2" variant="button" align="left">
             Account Details
           </Typography>
