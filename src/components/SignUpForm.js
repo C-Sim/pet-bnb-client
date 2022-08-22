@@ -41,7 +41,9 @@ export const SignUpForm = ({ isMobile }) => {
       loading: addressLookupLoading,
       error: addressLookupError,
     },
-  ] = useLazyQuery(ADDRESS_LOOKUP);
+  ] = useLazyQuery(ADDRESS_LOOKUP, {
+    fetchPolicy: "network-only",
+  });
   const {
     register,
     formState: { errors },

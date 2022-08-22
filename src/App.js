@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import {
   ApolloClient,
   InMemoryCache,
@@ -6,9 +6,11 @@ import {
   createHttpLink,
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
-import { LoginPage } from "./containers/LoginPage";
-import { SignUpPage } from "./containers/SignUpPage";
+import Stack from "@mui/material/Stack";
+
 import { AppProvider } from "./context/AppProvider";
+import { AppRoutes } from "./AppRoutes";
+import { NavBar } from "./components/NavBar";
 
 const link = createHttpLink({
   uri: process.env.REACT_APP_GRAPHQL || "http://localhost:4000",
@@ -36,10 +38,21 @@ export const App = () => {
     <ApolloProvider client={client}>
       <BrowserRouter>
         <AppProvider>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/sign-up" element={<SignUpPage />} />
-          </Routes>
+          <Stack sx={{ minHeight: "100vh" }} spacing={0}>
+            <NavBar
+              navItems={[
+                {
+                  label: "Login",
+                  path: "/login",
+                },
+                {
+                  label: "Sign Up",
+                  path: "/sign-up",
+                },
+              ]}
+            />
+            <AppRoutes />
+          </Stack>
         </AppProvider>
       </BrowserRouter>
     </ApolloProvider>
